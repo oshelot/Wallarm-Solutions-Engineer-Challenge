@@ -1,82 +1,81 @@
-Wallarm Solutions Engineer Challenge
+# Wallarm Solutions Engineer Challenge
 
-This project implements a local, self-hosted Wallarm Filtering Node running in Docker, connected to a simple backend (httpbin) and tested with GoTestWAF attack simulation traffic.
-The goal was to deploy, verify, and document a working Wallarm environment that detects and blocks malicious requests.
+This project implements a **local, self-hosted Wallarm node** using Docker Compose, a simple backend (`httpbin`), and **GoTestWAF** to simulate attack traffic and generate local reports.
 
-🧩 1️⃣ Deploy a Wallarm Filtering Node
+---
 
-Deployment choice: Docker Compose (local, offline-friendly)
-Reasoning: Easy to replicate, minimal infrastructure, full control over environment variables and logs.
+## 1. Deploy a Wallarm Filtering Node
 
-Steps performed
+**Deployment Choice:** Docker Compose (local)  
+**Why:** Simple, reproducible, and provides full control over configuration and logs without external exposure.
 
-Created a new Compose stack with three services:
+### Services
 
-wallarm-node: Wallarm NGINX-based filtering node
+- `wallarm-node` – Wallarm NGINX-based filtering node  
+- `httpbin` – lightweight backend API  
+- `gotestwaf` – on-demand container for attack simulation and reporting
 
-httpbin: simple HTTP backend target
+### Environment Variables (`compose/.env`)
 
-gotestwaf: on-demand container for traffic simulation
-
-Configured environment variables via compose/.env:
-
+```bash
 WALLARM_API_TOKEN=<Deploy token>
 WALLARM_API_HOST=audit.api.wallarm.com
 WALLARM_LABELS=group=local-lab
 WALLARM_MODE=block
 NGINX_BACKEND=httpbin
+```
 
+### Start Services
+```bash
+cd compose
+docker compose up -d httpbin wallarm-node
+```
 
-Verified connectivity and successful registration in the Wallarm Console → Settings → Nodes → Regular Nodes.
+### Verify Node Registration
+In the Wallarm Console, go to:
 
-Troubleshooting highlight
-Initially, the node didn’t appear in the UI. I suspected a token type issue, but the real cause was an incorrect API host.
-Documentation listed:
+```
+Settings → Nodes → Regular Nodes
+```
 
-us1.api.wallarm.com – US Cloud
+You should see your node with the label `group=local-lab`.
 
-api.wallarm.com – EU Cloud
-My tenant used my.audit.wallarm.com, so the correct endpoint was audit.api.wallarm.com.
-Updating WALLARM_API_HOST resolved registration immediately.
+---
 
-🌐 2️⃣ Set Up a Backend Origin
+## 2. Set Up a Backend Origin
 
-Backend: kennethreitz/httpbin
+**Backend:** [`kennethreitz/httpbin`](https://hub.docker.com/r/kennethreitz/httpbin)
 
-Configuration
-
-Added as a Compose service, exposed internally on port 80.
-
-The Wallarm node forwards traffic to it via NGINX_BACKEND=httpbin.
-
-Verified reachability:
-
+### Verify Connectivity
+```bash
 curl -i http://localhost:8080/get
+```
 
+**Expected Output:**
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+```
 
-Result: HTTP 200 response confirms Wallarm proxy → backend path is healthy.
+This confirms traffic passes through the Wallarm proxy to the backend.
 
-🚦 3️⃣ Generate Traffic Using GoTestWAF
+---
 
-Tool: Wallarm GoTestWAF
+## 3. Generate Traffic Using GoTestWAF
 
-Execution: containerized via Compose network.
+### Monitoring vs Blocking Mode
+- **Monitoring:** All requests return 200; GoTestWAF won’t detect a WAF.  
+- **Blocking:** Requests like SQL injection payloads return 403/406/429 and are logged as attacks.
 
-Monitoring vs. Blocking
-
-In monitoring, all requests returned 200 → no blocks detected.
-
-After switching to blocking mode, requests such as
-
+### Manual Block Test
+```bash
+# URL-encoded quotes
 curl -i 'http://localhost:8080/get?user=admin%27%20OR%20%271%27=%271'
+# Expect 403/406/429 in block mode
+```
 
-
-returned 403, confirming attack blocking.
-
-Report Generation
-
-Executed:
-
+### Run GoTestWAF and Save Local Reports
+```bash
 docker compose run --rm gotestwaf \
   --url=http://wallarm-node:80 \
   --blockStatusCodes 403,406,429 \
@@ -85,49 +84,55 @@ docker compose run --rm gotestwaf \
   --reportName gotestwaf-2025-10-27-0836 \
   --includePayloads \
   --noEmailReport
+```
 
-
-Reports generated:
-
+### Reports Generated
+```
 reports/
 ├── gotestwaf-2025-10-27-0836.csv
 ├── gotestwaf-2025-10-27-0836.html
 └── gotestwaf-2025-10-27-0836.pdf
+```
 
+### Findings
+- WAF pre-check returned `blocked=true` with HTTP 403.  
+- REST traffic was successfully intercepted.  
+- Attacks appeared in the Wallarm Console under **Events → Attacks**.
 
-Findings
+---
 
-WAF pre-check detected blocking (blocked=true, HTTP 403).
+## 4. Document Your Process
 
-REST traffic protected; GraphQL/gRPC endpoints skipped (not present).
+### Overview Summary
+This local Docker deployment demonstrates:
 
-Attacks surfaced in Wallarm Console’s Events → Attacks dashboard.
+- Successful node registration with the correct API host (`audit.api.wallarm.com`)
+- Inline attack blocking in **block** mode
+- Local, reproducible report generation using **GoTestWAF**
 
-🧠 4️⃣ Document Your Process
-Overview Summary
+### Issues and Resolutions
 
-A self-contained local Docker deployment replicates a typical on-prem Wallarm installation.
-It demonstrates:
+| Issue | Root Cause | Resolution |
+|-------|-------------|------------|
+| Node not visible in Console | Wrong API host | Tenant URL was `my.audit.wallarm.com`; updated to `WALLARM_API_HOST=audit.api.wallarm.com`. |
+| No blocking despite `.env` | Hard-coded mode in Compose file | Updated Compose to use `WALLARM_MODE: "${WALLARM_MODE:-monitoring}"` and recreated container. |
+| GoTestWAF connection refused | Node not ready / network timing | Added healthcheck and `depends_on`. |
+| Report write error | Missing volume mapping | Added `../reports:/app/reports` and set `--reportPath /app/reports`. |
 
-Node registration and heartbeat with Wallarm Cloud
+---
 
-Real-time detection and blocking of simulated OWASP attacks
+## Screenshots
 
-Local report generation and validation workflow
+| Description | File |
+|--------------|------|
+| Node registered | `docs/node.png` |
+| Attacks (monitoring) | `docs/monitoring.png` |
+| Attacks (blocking) | `docs/blocked.png` |
+| Proxy/endpoint test | `docs/endpoint.png` |
 
-Key Issues & Resolutions
-Issue	Root Cause	Resolution
-Node not visible in Console	Wrong WALLARM_API_HOST	Updated to audit.api.wallarm.com
-No blocks in GoTestWAF	Node stuck in monitoring	Fixed docker-compose.yml to load .env variable
-“Connection refused” from GoTestWAF	Race condition / network timing	Added healthcheck and dependency logic
-Report creation failed	No mounted /app/reports	Added volume mapping to Compose
-📸 Screenshots
-Description	File
-Node registered in Console	docs/node.png
-Attacks view (monitoring)	docs/monitoring.png
-Attacks view (blocking)	docs/blocked.png
-Endpoint confirmation	docs/endpoint.png
-✅ Summary
+---
 
-This challenge successfully demonstrates a fully functional Wallarm filtering node, deployed locally with Docker, connected to Wallarm Cloud (audit.api.wallarm.com), and verified with GoTestWAF.
-Blocking mode operated as expected, generating valid reports and attack telemetry visible in the dashboard.
+## Summary
+
+This challenge demonstrates a **fully functional Wallarm Docker node** protecting a backend and integrated with Wallarm Cloud for telemetry.  
+In **block mode**, GoTestWAF confirms real attack blocking and report generation, with artifacts stored under `reports/`.
