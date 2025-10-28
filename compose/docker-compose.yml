@@ -1,0 +1,46 @@
+networks:
+  wallarmnet:
+    driver: bridge
+
+services:
+  httpbin:
+    image: kennethreitz/httpbin:latest
+    container_name: httpbin
+    expose:
+      - "80"
+    networks:
+      - wallarmnet
+
+  wallarm-node:
+    image: wallarm/node:latest
+    container_name: wallarm-node
+    depends_on:
+      - httpbin
+    environment:
+      # REQUIRED: replace with your real token (API token with Deploy role or Node token)
+      WALLARM_API_TOKEN: "${WALLARM_API_TOKEN}"
+      # For US cloud set API host explicitly; EU uses default
+      WALLARM_API_HOST: "audit.api.wallarm.com"
+      # Group label (works with API token Deploy role)
+      WALLARM_LABELS: "group=local-lab"
+      # Minimal reverse proxy target — points to the Docker service name
+      NGINX_BACKEND: "httpbin"
+      # Start in monitoring (no blocking) for first run; switch to block later
+      WALLARM_MODE: "block"
+      # Optional: keep IPv4 only to avoid odd localhost/IPv6 issues
+      DISABLE_IPV6: "true"
+    ports:
+      - "8080:80"      # send traffic to Wallarm at http://localhost:8080
+    networks:
+      - wallarmnet
+
+  gotestwaf:
+    image: wallarm/gotestwaf:latest
+    container_name: gotestwaf
+    depends_on:
+      - wallarm-node
+    # We'll run this manually with `docker compose run --rm gotestwaf ...`
+    volumes:
+      - ../reports:/app/reports
+    networks:
+      - wallarmnet
