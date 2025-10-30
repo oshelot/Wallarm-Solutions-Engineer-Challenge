@@ -133,7 +133,7 @@ I wanted to see what API discovery would look like with a sample application lik
 | Attacks (blocking) | `docs/blocked.png` |
 | Proxy/endpoint test | `docs/endpoint.png` |
 | cpAPI API Discovery | `docs/crapi-discovery.png` |
-
+| High Level Diagram | `docs/diagram.png` |
 ---
 
 ## Summary
