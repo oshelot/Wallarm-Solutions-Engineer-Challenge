@@ -121,6 +121,9 @@ This local Docker deployment demonstrates:
 
 ---
 
+## 5. Additional API Discovery
+I wanted to see what API discovery would look like with a sample application like crAPI. A seperate docker enviornment was spun up where we proxied API traffic through a Wallarm node. Discovery results captured in a screenshot
+
 ## Screenshots
 
 | Description | File |
@@ -129,6 +132,7 @@ This local Docker deployment demonstrates:
 | Attacks (monitoring) | `docs/monitoring.png` |
 | Attacks (blocking) | `docs/blocked.png` |
 | Proxy/endpoint test | `docs/endpoint.png` |
+| cpAPI API Discovery | `docs/crapi-discovery.png` |
 
 ---
 
