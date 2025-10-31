@@ -1,6 +1,6 @@
 # Wallarm Solutions Engineer Challenge
 
-This project implements a **local, self-hosted Wallarm node** using Docker Compose, a simple backend (`httpbin`), and **GoTestWAF** to simulate attack traffic and generate local reports.
+This project implements a **local, self-hosted Wallarm node** using Docker Compose, a simple backend (`httpbin`), and **GoTestWAF** to simulate attack traffic and generate local reports. After this initial deployment, and addition **crAPI** environment was setup to further explore API Discovery.
 
 ---
 
