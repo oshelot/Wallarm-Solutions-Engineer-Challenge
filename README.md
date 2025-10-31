@@ -112,17 +112,14 @@ This local Docker deployment demonstrates:
 
 ### Issues and Resolutions
 
-| Issue | Root Cause | Resolution |
-|-------|-------------|------------|
-| Node not visible in Console | Wrong API host | Tenant URL was `my.audit.wallarm.com`; updated to `WALLARM_API_HOST=audit.api.wallarm.com`. |
-| No blocking despite `.env` | Hard-coded mode in Compose file | Updated Compose to use `WALLARM_MODE: "${WALLARM_MODE:-monitoring}"` and recreated container. |
-| GoTestWAF connection refused | Node not ready / network timing | Added healthcheck and `depends_on`. |
-| Report write error | Missing volume mapping | Added `../reports:/app/reports` and set `--reportPath /app/reports`. |
+- At first, the deployed Node was not visible in Console. Used both Admin/Deploy API tokens with same results. Looked at Documentation and noticed there are separate deployments for US/EU. Suspected my "audit" URL may be a trial environment. Checked to see if *audit.api.wallarm.com* resolved. When successful, updated the config file and Node registered.| Tenant URL was `my.audit.wallarm.com`; updated to `WALLARM_API_HOST=audit.api.wallarm.com`. 
+- Mode seemed to be stuck in "monitoring" despite blocking despite `.env`. The issue was I had hard-coded mode in Compose file. Updated Compose to use `WALLARM_MODE: "${WALLARM_MODE:-monitoring}"` and recreated container. Worked properly after that.
+- Generating reports wasn't working at first. Upon investigation, a missing "volume mapping" was discovered. Added `../reports:/app/reports` and set `--reportPath /app/reports`. Once done, reports generated properly.
 
 ---
 
 ## 5. Additional API Discovery
-I wanted to see what API discovery would look like with a sample application like crAPI. A seperate docker enviornment was spun up where we proxied API traffic through a Wallarm node. Discovery results captured in a screenshot
+I wanted to see what API discovery would look like with a sample application like crAPI. A seperate docker enviornment (compose-crapi/docker-compose.yml) was spun up where API traffic was proxied through a Wallarm node to facilitate discovery. Results captured in a screenshot
 
 ## Screenshots
 
