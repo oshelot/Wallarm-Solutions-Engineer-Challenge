@@ -119,7 +119,7 @@ This local Docker deployment demonstrates:
 ---
 
 ## 5. Additional API Discovery
-I wanted to see what API discovery would look like with a sample application like crAPI. A seperate docker enviornment (compose-crapi/docker-compose.yml) was spun up where API traffic was proxied through a Wallarm node to facilitate discovery. Results captured in a screenshot
+I wanted to see what API discovery would look like with a sample application like crAPI. A seperate docker enviornment (**compose-crapi/docker-compose.yml**) was spun up where API traffic was proxied through a Wallarm node to facilitate discovery. Results captured in a screenshot
 
 ## Screenshots
 
