@@ -112,7 +112,7 @@ This local Docker deployment demonstrates:
 
 ### Issues and Resolutions
 
-- At first, the deployed Node was not visible in Console. Used both Admin/Deploy API tokens with same results. Looked at Documentation and noticed there are separate deployments for US/EU. Suspected my "audit" URL may be a trial environment. Checked to see if *audit.api.wallarm.com* resolved. When successful, updated the config file and Node registered.| Tenant URL was `my.audit.wallarm.com`; updated to `WALLARM_API_HOST=audit.api.wallarm.com`. 
+- At first, the deployed Node was not visible in Console. Used both Admin/Deploy API tokens with same results. Looked at Documentation and noticed there are separate deployments for US/EU. Suspected my "audit" URL may be a trial environment. Checked to see if *audit.api.wallarm.com* resolved. When successful, updated the config file and Node registered.
 - Mode seemed to be stuck in "monitoring" despite blocking despite `.env`. The issue was I had hard-coded mode in Compose file. Updated Compose to use `WALLARM_MODE: "${WALLARM_MODE:-monitoring}"` and recreated container. Worked properly after that.
 - Generating reports wasn't working at first. Upon investigation, a missing "volume mapping" was discovered. Added `../reports:/app/reports` and set `--reportPath /app/reports`. Once done, reports generated properly.
 
