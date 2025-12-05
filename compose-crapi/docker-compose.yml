@@ -336,7 +336,7 @@ services:
       WALLARM_MODE: "monitoring"
     ports:
       # Wallarm HTTP entrypoint (send Postman traffic here if you want to go through Wallarm)
-      - "127.0.0.1:9080:80"
+      - "80:80"
 
 volumes:
   mongodb-data:
