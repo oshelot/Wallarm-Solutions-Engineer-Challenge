@@ -290,7 +290,7 @@ services:
       MH_STORAGE: mongodb
     ports:
       #  - "127.0.0.1:1025:1025" # smtp server
-      - "${LISTEN_IP:-127.0.0.1}:8025:8025" # Mail ui
+      - "0.0.0.0:8025:8025" # Mail ui
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "8025" ]
       interval: 15s
